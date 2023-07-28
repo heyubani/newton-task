@@ -27,7 +27,7 @@ export const signup = async (req, res) => {
   
       return res.status(Enums.HTTP_CREATED).json({
         status: 'success',
-        message: 'Successfully create account with Event-meet',
+        message: 'Successfully create account with Newton',
         data: user,
       });
     } catch (error) {
@@ -55,7 +55,7 @@ export const signup = async (req, res) => {
 
       return res.status(Enums.SUCCESS).json({
         status: 'Success',
-        message: 'Successfully login',
+        message: 'Successfully logged in',
         data: {
           user_id: user.user_id,
           username: user.username,
