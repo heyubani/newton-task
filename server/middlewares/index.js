@@ -2,84 +2,83 @@ import User from '../models/user';
 import * as Enums from '../libs/enum.status';
 import jwt from 'jsonwebtoken';
 
-  export const getUser = (type = '') => async(req, res, next) => {
-    try {
-        const payload = req.body.username || req.decoded.username;
-        const user = await User.findOne({ username: payload });
-      if (!user && type === 'login') {
-        return res.status(Enums.HTTP_NOT_FOUND)
-         .json({
-            status: 'error',
-            message: 'Invalid username/password.'
+export const getUser = (type = '') => async (req, res, next) => {
+  try {
+    const payload = req.body.username || req.decoded.username;
+    const user = await User.findOne({ username: payload });
+    if (!user && type === 'login') {
+      return res.status(Enums.HTTP_NOT_FOUND)
+        .json({
+          status: 'error',
+          message: 'Invalid username/password.'
         });
-      }
-      if (user && type === 'validate') {
+    }
+    if (user && type === 'validate') {
       return res.status(Enums.HTTP_BAD_REQUEST).json({
         status: 'error',
         message: 'decoded that user account already exists'
       });
-      }
-      req.user = user;
-      return next();
-    } catch (error) {
-      console.error(`getting user details from the database failed::`, error.message);
-      return next(error);
     }
-  };
+    req.user = user;
+    return next();
+  } catch (error) {
+    console.error(`getting user details from the database failed::`, error.message);
+    return next(error);
+  }
+};
 
-  export const validateAuthToken = async(req, res, next) => {
-    try {
-      let token = req.headers.authorization;
-      if (!token) {
-        return res.status(Enums.HTTP_UNAUTHORIZED)
+export const validateAuthToken = async (req, res, next) => {
+  try {
+    let token = req.headers.authorization;
+    if (!token) {
+      return res.status(Enums.HTTP_UNAUTHORIZED)
         .json({
-           status: 'error',
-           message: 'Please provide a token.'
-       });
-      }
-      if (!token.startsWith('Bearer ')) {
-        return res.status(Enums.HTTP_UNAUTHORIZED)
-         .json({
-            status: 'error',
-            message: 'Invalid/Expired Token.'
+          status: 'error',
+          message: 'Please provide a token.'
         });
-      }
+    }
+    if (!token.startsWith('Bearer ')) {
+      return res.status(Enums.HTTP_UNAUTHORIZED)
+        .json({
+          status: 'error',
+          message: 'Invalid/Expired Token.'
+        });
+    }
 
-      if (token.startsWith('Bearer ')) {
-        token = token.slice(7, token.length);
-      }
-  
-      const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    if (token.startsWith('Bearer ')) {
+      token = token.slice(7, token.length);
+    }
 
-      if (decoded.message) {
-        if (decoded.message === 'jwt expired') {
-          return res.status(Enums.HTTP_UNAUTHORIZED)
-         .json({
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+    if (decoded.message) {
+      if (decoded.message === 'jwt expired') {
+        return res.status(Enums.HTTP_UNAUTHORIZED)
+          .json({
             status: 'error',
             message: 'Session expired'
-        });
-        }
- 
-        return res.status(Enums.HTTP_UNAUTHORIZED)
-         .json({
-            status: 'error',
-            message:  decoded.message
-        });
+          });
       }
-      const user = await User.findOne({ username: decoded.username.trim() });
-  
-  
-      if (!user) {
-        return res.status(Enums.HTTP_UNAUTHORIZED)
-         .json({
-            status: 'error',
-            message:  'Invalid/Expired Token'
+
+      return res.status(Enums.HTTP_UNAUTHORIZED)
+        .json({
+          status: 'error',
+          message: decoded.message
         });
-      }
-      req.user = user;
-      return next();
-    } catch (error) {
-      return next(error);
     }
-  };
-  
+    const user = await User.findOne({ username: decoded.username.trim() });
+
+
+    if (!user) {
+      return res.status(Enums.HTTP_UNAUTHORIZED)
+        .json({
+          status: 'error',
+          message: 'Invalid/Expired Token'
+        });
+    }
+    req.user = user;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+};
